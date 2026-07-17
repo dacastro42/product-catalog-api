@@ -26,10 +26,23 @@ export default tseslint.config(
   },
   {
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
+      // Evita cientos de errores "Delete ␍" en Windows por CRLF vs LF.
+      // Prettier respeta el salto de línea que ya tenga cada archivo.
+      'prettier/prettier': ['error', { endOfLine: 'auto' }],
+  
+      // Mantenemos esta regla activa: la prueba exige evitar `any`.
+      '@typescript-eslint/no-explicit-any': 'error',
+  
+      // Promesas sin await: advertencia (útil en main.ts con bootstrap()).
       '@typescript-eslint/no-floating-promises': 'warn',
-      '@typescript-eslint/no-unsafe-argument': 'warn',
-      "prettier/prettier": ["error", { endOfLine: "auto" }],
+  
+      // Las reglas "unsafe" se disparan mucho con decoradores de NestJS
+      // (TypeORM, Swagger, class-validator) sin aportar valor real aquí.
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
     },
   },
 );
