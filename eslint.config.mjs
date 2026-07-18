@@ -26,11 +26,11 @@ export default tseslint.config(
   },
   {
     rules: {
-      // Evita cientos de errores "Delete ␍" en Windows por CRLF vs LF.
+      // Evita muchos errores "Delete ␍" en Windows por CRLF vs LF.
       // Prettier respeta el salto de línea que ya tenga cada archivo.
       'prettier/prettier': ['error', { endOfLine: 'auto' }],
   
-      // Mantenemos esta regla activa: la prueba exige evitar `any`.
+      // Se mantiene la regla activa: la prueba exige evitar `any`.
       '@typescript-eslint/no-explicit-any': 'error',
   
       // Promesas sin await: advertencia (útil en main.ts con bootstrap()).
