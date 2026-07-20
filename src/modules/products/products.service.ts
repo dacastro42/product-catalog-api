@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  NotImplementedException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PaginatedResponse } from '../../common/pagination/paginated-response/paginated-response.interface';
@@ -114,14 +110,39 @@ export class ProductsService {
     return product;
   }
 
-  update(id: string, updateProductDto: UpdateProductDto): Promise<Product> {
-    void id;
-    void updateProductDto;
-    throw new NotImplementedException('Actualización disponible próximamente');
+  async update(
+    id: string,
+    updateProductDto: UpdateProductDto,
+  ): Promise<Product> {
+    // Reutiliza findOne: si el producto no existe (o fue eliminado
+    // lógicamente), lanza 404 y el flujo se corta aquí.
+    const product = await this.findOne(id);
+
+    // Regla de negocio: si el PATCH intenta cambiar la categoría,
+    // la nueva categoría debe existir (404 si no).
+    if (updateProductDto.categoryId) {
+      await this.categoriesService.findOne(updateProductDto.categoryId);
+    }
+
+    // Fusiona solo los campos presentes en el DTO sobre la entidad
+    // cargada. Los campos no enviados conservan su valor actual:
+    // esa es la semántica de PATCH (actualización parcial).
+    Object.assign(product, updateProductDto);
+
+    // save sobre una entidad con id ejecuta UPDATE, no INSERT,
+    // y refresca updatedAt automáticamente (@UpdateDateColumn).
+    return this.productsRepository.save(product);
   }
 
-  remove(id: string): Promise<void> {
-    void id;
-    throw new NotImplementedException('Eliminación disponible próximamente');
+  async remove(id: string): Promise<void> {
+    // Reutiliza findOne: 404 si no existe o ya fue eliminado.
+    // (Eliminar dos veces el mismo producto responde 404 la segunda
+    // vez: para el consumidor de la API ya no existe.)
+    const product = await this.findOne(id);
+
+    // softRemove NO borra la fila: escribe la fecha actual en
+    // deletedAt (gracias a @DeleteDateColumn). A partir de ahí,
+    // todas las consultas lo excluyen automáticamente.
+    await this.productsRepository.softRemove(product);
   }
 }
