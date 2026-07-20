@@ -59,7 +59,15 @@ export class ProductsController {
   findAll(@Query() queryDto: QueryProductsDto) {
     return this.productsService.findAll(queryDto);
   }
-
+  @Get('stats')
+  @ApiOperation({ summary: 'Estadísticas del catálogo para el dashboard' })
+  @ApiOkResponse({
+    description:
+      'Totales de productos (general, activos, inactivos) y conteo por categoría',
+  })
+  getStats() {
+    return this.productsService.getStats();
+  }
   @Get(':id')
   @ApiOperation({ summary: 'Obtener un producto por ID' })
   @ApiOkResponse({ description: 'Producto encontrado' })

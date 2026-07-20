@@ -7,6 +7,8 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { QueryProductsDto } from './dto/query-products.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { Product } from './entities/product.entity';
+import { ProductStatus } from './enums/product-status.enum';
+import { ProductStats } from './interfaces/product-stats.interface';
 
 /**
  * ProductsService
@@ -144,5 +146,53 @@ export class ProductsService {
     // deletedAt (gracias a @DeleteDateColumn). A partir de ahí,
     // todas las consultas lo excluyen automáticamente.
     await this.productsRepository.softRemove(product);
+  }
+
+  async getStats(): Promise<ProductStats> {
+    // Los tres conteos simples con la API declarativa.
+    // El soft delete excluye los eliminados automáticamente.
+    // Promise.all: las consultas viajan en paralelo, no en serie.
+    const [total, active, inactive] = await Promise.all([
+      this.productsRepository.count(),
+      this.productsRepository.count({
+        where: { status: ProductStatus.ACTIVE },
+      }),
+      this.productsRepository.count({
+        where: { status: ProductStatus.INACTIVE },
+      }),
+    ]);
+
+    // Conteo agrupado por categoría: aquí sí hace falta QueryBuilder,
+    // porque la API declarativa no soporta GROUP BY.
+    // SQL equivalente:
+    //   SELECT c.id, c.name, COUNT(p.id)
+    //   FROM products p JOIN categories c ON c.id = p."categoryId"
+    //   WHERE p."deletedAt" IS NULL
+    //   GROUP BY c.id, c.name
+    //   ORDER BY count DESC
+    const rawByCategory = await this.productsRepository
+      .createQueryBuilder('product')
+      .innerJoin('product.category', 'category')
+      .select('category.id', 'categoryId')
+      .addSelect('category.name', 'categoryName')
+      .addSelect('COUNT(product.id)', 'count')
+      .groupBy('category.id')
+      .addGroupBy('category.name')
+      .orderBy('count', 'DESC')
+      .getRawMany<{
+        categoryId: string;
+        categoryName: string;
+        count: string;
+      }>();
+
+    // COUNT llega como string desde PostgreSQL (bigint): se convierte
+    // a number para cumplir el contrato de la interfaz.
+    const byCategory = rawByCategory.map((row) => ({
+      categoryId: row.categoryId,
+      categoryName: row.categoryName,
+      count: Number(row.count),
+    }));
+
+    return { total, active, inactive, byCategory };
   }
 }
