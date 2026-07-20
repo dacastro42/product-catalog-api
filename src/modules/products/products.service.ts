@@ -1,4 +1,8 @@
-import { Injectable, NotImplementedException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  NotImplementedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PaginatedResponse } from '../../common/pagination/paginated-response/paginated-response.interface';
@@ -94,9 +98,20 @@ export class ProductsService {
     };
   }
 
-  findOne(id: string): Promise<Product> {
-    void id;
-    throw new NotImplementedException('Detalle disponible próximamente');
+  async findOne(id: string): Promise<Product> {
+    // Busca por id incluyendo la categoría (JOIN), igual que el listado.
+    // El soft delete aplica solo: si el producto fue eliminado
+    // lógicamente, findOne no lo encuentra y respondemos 404.
+    const product = await this.productsRepository.findOne({
+      where: { id },
+      relations: { category: true },
+    });
+
+    if (!product) {
+      throw new NotFoundException(`Producto con id ${id} no encontrado`);
+    }
+
+    return product;
   }
 
   update(id: string, updateProductDto: UpdateProductDto): Promise<Product> {
