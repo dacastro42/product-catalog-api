@@ -9,6 +9,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -20,6 +21,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { CreateProductDto } from './dto/create-product.dto';
+import { QueryProductsDto } from './dto/query-products.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductsService } from './products.service';
 
@@ -44,10 +46,18 @@ export class ProductsController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Listar productos (paginado y filtrable)' })
-  @ApiOkResponse({ description: 'Listado paginado de productos' })
-  findAll() {
-    return this.productsService.findAll();
+  @ApiOperation({
+    summary:
+      'Listar productos con paginación, búsqueda, filtros y ordenamiento',
+  })
+  @ApiOkResponse({
+    description: 'Listado paginado: { data: Product[], meta: {...} }',
+  })
+  @ApiBadRequestResponse({
+    description: 'Parámetros de consulta inválidos',
+  })
+  findAll(@Query() queryDto: QueryProductsDto) {
+    return this.productsService.findAll(queryDto);
   }
 
   @Get(':id')
