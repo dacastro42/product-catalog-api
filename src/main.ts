@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import helmet from 'helmet';
 
 /**
  * bootstrap
@@ -13,6 +14,10 @@ import { AppModule } from './app.module';
  */
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
+
+  // Helmet: agrega cabeceras HTTP de seguridad estándar
+  // (oculta X-Powered-By, previene sniffing de tipos, clickjacking, etc.)
+  app.use(helmet());
 
   // ConfigService en lugar de process.env directo (regla de la prueba).
   const configService = app.get(ConfigService);
