@@ -2,12 +2,14 @@
  * CategoryProductCount
  *
  * Responsabilidad: describir el conteo de productos de una
- * categoría dentro de las estadísticas.
+ * categoría dentro de las estadísticas, con desglose por estado.
  */
 export interface CategoryProductCount {
   categoryId: string;
   categoryName: string;
   count: number;
+  active: number;
+  inactive: number;
 }
 
 /**

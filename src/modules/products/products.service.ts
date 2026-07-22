@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PaginatedResponse } from '../../common/pagination/paginated-response/paginated-response.interface';
 import { CategoriesService } from '../categories/categories.service';
+import { Category } from '../categories/entities/category.entity';
 import { CreateProductDto } from './dto/create-product.dto';
 import { QueryProductsDto } from './dto/query-products.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -22,6 +23,8 @@ export class ProductsService {
   constructor(
     @InjectRepository(Product)
     private readonly productsRepository: Repository<Product>,
+    @InjectRepository(Category)
+    private readonly categoriesRepository: Repository<Category>,
     private readonly categoriesService: CategoriesService,
   ) {}
 
@@ -162,35 +165,58 @@ export class ProductsService {
       }),
     ]);
 
-    // Conteo agrupado por categoría: aquí sí hace falta QueryBuilder,
-    // porque la API declarativa no soporta GROUP BY.
-    // SQL equivalente:
-    //   SELECT c.id, c.name, COUNT(p.id)
-    //   FROM products p JOIN categories c ON c.id = p."categoryId"
-    //   WHERE p."deletedAt" IS NULL
-    //   GROUP BY c.id, c.name
-    //   ORDER BY count DESC
-    const rawByCategory = await this.productsRepository
-      .createQueryBuilder('product')
-      .innerJoin('product.category', 'category')
+    // Parte de CATEGORIES con LEFT JOIN a products: toda categoría
+    // aparece aunque no tenga productos (count = 0).
+    // La condición de soft delete va en el ON del JOIN para no
+    // descartar las categorías vacías.
+    //
+    // Agregación condicional: COUNT solo cuenta valores NO nulos,
+    // así que "CASE WHEN status = 'ACTIVE' THEN 1 END" produce
+    // 1 para activos y NULL para el resto -> cuenta solo activos.
+    // El status va parametrizado (:active/:inactive), nunca
+    // concatenado, igual que cualquier valor externo.
+    const rawByCategory = await this.categoriesRepository
+      .createQueryBuilder('category')
+      .leftJoin(
+        Product,
+        'product',
+        'product.categoryId = category.id AND product.deletedAt IS NULL',
+      )
       .select('category.id', 'categoryId')
       .addSelect('category.name', 'categoryName')
       .addSelect('COUNT(product.id)', 'count')
+      .addSelect(
+        'COUNT(CASE WHEN product.status = :active THEN 1 END)',
+        'active',
+      )
+      .addSelect(
+        'COUNT(CASE WHEN product.status = :inactive THEN 1 END)',
+        'inactive',
+      )
+      .setParameters({
+        active: ProductStatus.ACTIVE,
+        inactive: ProductStatus.INACTIVE,
+      })
       .groupBy('category.id')
       .addGroupBy('category.name')
       .orderBy('count', 'DESC')
+      .addOrderBy('category.name', 'ASC')
       .getRawMany<{
         categoryId: string;
         categoryName: string;
         count: string;
+        active: string;
+        inactive: string;
       }>();
 
-    // COUNT llega como string desde PostgreSQL (bigint): se convierte
-    // a number para cumplir el contrato de la interfaz.
+    // Los agregados llegan como string desde PostgreSQL (bigint):
+    // se convierten a number para cumplir el contrato.
     const byCategory = rawByCategory.map((row) => ({
       categoryId: row.categoryId,
       categoryName: row.categoryName,
       count: Number(row.count),
+      active: Number(row.active),
+      inactive: Number(row.inactive),
     }));
 
     return { total, active, inactive, byCategory };

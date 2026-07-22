@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { CategoriesService } from '../categories/categories.service';
+import { Category } from '../categories/entities/category.entity';
 import { Product } from './entities/product.entity';
 import { ProductsService } from './products.service';
 
@@ -16,6 +17,15 @@ describe('ProductsService', () => {
           useValue: {
             create: jest.fn(),
             save: jest.fn(),
+            createQueryBuilder: jest.fn(),
+            count: jest.fn(),
+            findOne: jest.fn(),
+            softRemove: jest.fn(),
+          },
+        },
+        {
+          provide: getRepositoryToken(Category),
+          useValue: {
             createQueryBuilder: jest.fn(),
           },
         },
