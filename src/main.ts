@@ -4,7 +4,7 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
-
+import { RequestLoggingInterceptor } from './common/interceptors/request-logging.interceptor';
 /**
  * bootstrap
  *
@@ -27,7 +27,8 @@ async function bootstrap(): Promise<void> {
 
   // Todas las rutas quedan bajo /api/v1 (ej: /api/v1/categories).
   app.setGlobalPrefix('api/v1');
-
+  // Interceptor global: registra todas las solicitudes de la API.
+  app.useGlobalInterceptors(new RequestLoggingInterceptor());
   // Validación global de DTOs:
   // - transform: convierte payloads a instancias de los DTOs (y tipos).
   // - whitelist: elimina propiedades no declaradas en el DTO.

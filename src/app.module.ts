@@ -7,6 +7,7 @@ import { AppService } from './app.service';
 import { DatabaseModule } from './common/database/database.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { ProductsModule } from './modules/products/products.module';
+import { HealthModule } from './health/health.module';
 
 /**
  * AppModule
@@ -33,6 +34,7 @@ import { ProductsModule } from './modules/products/products.module';
     DatabaseModule,
     CategoriesModule,
     ProductsModule,
+    HealthModule,
   ],
   controllers: [AppController],
   providers: [
