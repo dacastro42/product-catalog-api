@@ -5,6 +5,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
 import { RequestLoggingInterceptor } from './common/interceptors/request-logging.interceptor';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 /**
  * bootstrap
  *
@@ -29,6 +30,8 @@ async function bootstrap(): Promise<void> {
   app.setGlobalPrefix('api/v1');
   // Interceptor global: registra todas las solicitudes de la API.
   app.useGlobalInterceptors(new RequestLoggingInterceptor());
+  // Filtro global: toda excepción sale con el formato uniforme.
+  app.useGlobalFilters(new HttpExceptionFilter());
   // Validación global de DTOs:
   // - transform: convierte payloads a instancias de los DTOs (y tipos).
   // - whitelist: elimina propiedades no declaradas en el DTO.
