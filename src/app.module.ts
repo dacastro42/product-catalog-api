@@ -2,12 +2,10 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { DatabaseModule } from './common/database/database.module';
+import { HealthModule } from './health/health.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { ProductsModule } from './modules/products/products.module';
-import { HealthModule } from './health/health.module';
 
 /**
  * AppModule
@@ -36,9 +34,7 @@ import { HealthModule } from './health/health.module';
     ProductsModule,
     HealthModule,
   ],
-  controllers: [AppController],
   providers: [
-    AppService,
     // Guard global: aplica el límite a TODOS los endpoints sin
     // decorar cada controller.
     {

@@ -15,8 +15,8 @@ export default new DataSource({
   username: process.env.DB_USERNAME ?? 'postgres',
   password: process.env.DB_PASSWORD ?? 'postgres',
   database: process.env.DB_DATABASE ?? 'product_catalog',
-  // Patrones de archivos: la CLI necesita encontrar las entidades
-  // para comparar contra la BD, y las migraciones para ejecutarlas.
-  entities: ['src/**/*.entity.ts'],
-  migrations: ['src/common/database/migrations/*.ts'],
+  // __dirname funciona en src (ts-node) y en dist (compilado):
+  // el mismo archivo sirve para desarrollo y producción.
+  entities: [__dirname + '/../../**/*.entity{.ts,.js}'],
+  migrations: [__dirname + '/migrations/*{.ts,.js}'],
 });
