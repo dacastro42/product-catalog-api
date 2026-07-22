@@ -33,8 +33,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
         // TEMPORAL: crea/actualiza tablas desde las entidades.
         // Antes de finalizar la prueba se cambia a false y se usan
-        // migraciones (etapa posterior del plan).
-        synchronize: true,
+        // migraciones
+        synchronize: false,
       }),
     }),
   ],
